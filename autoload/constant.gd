@@ -1,0 +1,10 @@
+extends Node
+
+
+const PICTURE_WIDTH := 1200
+const PICTURE_HEIGHT := 800
+const HFRAME_COUNT := 12
+const VFRAME_COUNT := 8
+const PATTERN_SIZE := PICTURE_WIDTH / HFRAME_COUNT
+
+

@@ -1,0 +1,72 @@
+[gd_scene load_steps=8 format=3 uid="uid://cnlojcsphsmxi"]
+
+[ext_resource type="Script" path="res://script/game_play.gd" id="1_lf48k"]
+[ext_resource type="Texture2D" uid="uid://cey5sn8qjpe4i" path="res://images/pictures/testpic1.jpg" id="2_ydn58"]
+[ext_resource type="PackedScene" uid="uid://cim7ua1hvh7cw" path="res://scene/file_handler.tscn" id="3_176b5"]
+
+[sub_resource type="Theme" id="Theme_kr025"]
+Label/font_sizes/font_size = 32
+
+[sub_resource type="Theme" id="Theme_wh27d"]
+Label/font_sizes/font_size = 40
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k1m5u"]
+bg_color = Color(0.141176, 0.278431, 0.0196078, 1)
+
+[sub_resource type="Theme" id="Theme_verd8"]
+Button/font_sizes/font_size = 60
+Button/styles/normal = SubResource("StyleBoxFlat_k1m5u")
+
+[node name="GamePlay" type="Node2D" node_paths=PackedStringArray("overlay_node", "fh")]
+script = ExtResource("1_lf48k")
+overlay_node = NodePath("PictureArea/Picture/Overlays")
+fh = NodePath("FileHandler")
+
+[node name="PictureArea" type="Area2D" parent="."]
+
+[node name="Picture" type="Sprite2D" parent="PictureArea"]
+texture = ExtResource("2_ydn58")
+centered = false
+
+[node name="Overlays" type="Node2D" parent="PictureArea/Picture"]
+
+[node name="FileHandler" parent="." instance=ExtResource("3_176b5")]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer"]
+offset_right = 40.0
+offset_bottom = 40.0
+theme = SubResource("Theme_kr025")
+
+[node name="Files" type="Label" parent="CanvasLayer/HBoxContainer"]
+layout_mode = 2
+text = "Files found:
+
+"
+
+[node name="WorkingOn" type="Label" parent="CanvasLayer"]
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 40.0
+grow_horizontal = 2
+theme = SubResource("Theme_wh27d")
+
+[node name="NextBtn" type="Button" parent="CanvasLayer"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -22.5
+offset_top = -31.0
+offset_right = 22.5
+grow_horizontal = 2
+grow_vertical = 0
+theme = SubResource("Theme_verd8")
+text = "Next"
+
+[connection signal="pressed" from="CanvasLayer/NextBtn" to="." method="_on_next_btn_pressed"]
