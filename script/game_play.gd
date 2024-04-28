@@ -105,6 +105,9 @@ func _ready() -> void:
 #		if we've used that square before. So, we store both in the array.
 #	Put a blue outline in the main image
 # Step 3: Check for right mouse button
+#	See if the click was inside of one of our frames
+#	If not, then just return
+#	Otherwise, delete the frame
 func _input(event: InputEvent) -> void:
 # Step 1
 	if event.is_action_pressed("ui_cancel"): get_tree().quit()
@@ -123,16 +126,25 @@ func _input(event: InputEvent) -> void:
 				event.position.y - box.position.y - xyoffset,
 				Constant.PATTERN_SIZE, 
 				Constant.PATTERN_SIZE)
-			printt(event.position, sub_pic.region_rect)
 			frames.append([sub_pic.region_rect, 
 				Rect2(event.position.x - xyoffset,
 					  event.position.y - xyoffset,
 					  Constant.PATTERN_SIZE,
 					  Constant.PATTERN_SIZE)])
 			set_frame_found(sub_pic.region_rect)
-
+			audio_player.good_beep()
 # Step 3
-
+	if (event is InputEventMouseButton and 
+		event.button_index == MOUSE_BUTTON_MASK_RIGHT and 
+		event.pressed and 
+		active):
+		var frame: int = mouse_in_existing_pattern(event.position)
+		if frame == -1:
+			return
+		delete_frame_found(frame)
+		audio_player.delete_beep()
+		
+		
 # Built-in Signal Callbacks
 
 func _on_next_btn_pressed():
@@ -176,20 +188,24 @@ func start_new_picture(src: String) -> void:
 	frames.clear()
 	delete_frame_found(-1)
 	
-# set_frame_found(frame)
+# set_frame_found(rect)
 # Player cliced on one of our pattern frames
 #
 # Parameters
-#	frame: int						Frame number found
+#	rect: Rect2					Position and size of the frame
 # Return
 #	None
 #==
-# What the code is doing (steps)
+# Create a FoundFrame instance
+# Set its position and size to the Rect2 passed to us
+# Set the instance's frame_index to the last entry of frames
+# Add instance to our tree
+# Bump and display the frame count
 func set_frame_found(rect: Rect2) -> void:
-	var pos := rect.position #Vector2(posx, posy)
 	var overlay = found_frame.instantiate()
-	overlay.position = pos
+	overlay.position = rect.position
 	overlay.rect = rect
+	overlay.frame_index = frames.size() - 1
 	overlay_node.add_child(overlay)
 	frame_count += 1
 	$CanvasLayer/FrameCountBox/FrameCount.text = str(frame_count)
@@ -197,7 +213,7 @@ func set_frame_found(rect: Rect2) -> void:
 		
 
 # delete_frame_found(frame)
-# This method removes a frame from the screen.
+# This method removes a frame from they array and screen.
 # If frame is -1, then delete all of them
 #
 # Parameters
@@ -207,10 +223,12 @@ func set_frame_found(rect: Rect2) -> void:
 #==
 # What the code is doing (steps)
 func delete_frame_found(frame: int) -> void:
+	printt("Deleting frame: ", frame)
 	for o in overlay_node.get_children():
 		if o is FoundFrame:
-			if o.frame_number == frame or frame == -1:
+			if o.frame_index == frame or frame == -1:
 				o.queue_free()
+				frames.remove_at(frame)
 				frame_count -= 1
 				$CanvasLayer/FrameCountBox/FrameCount.text = str(frame_count)
 
