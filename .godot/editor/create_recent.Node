@@ -1,6 +1,10 @@
-Button
+AudioStreamPlayer
+Node2D
+Sprite2D
 Label
-VBoxContainer
+RichTextLabel
 HBoxContainer
+Button
+VBoxContainer
 CanvasLayer
 Node

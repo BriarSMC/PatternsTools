@@ -1,8 +1,10 @@
-[gd_scene load_steps=8 format=3 uid="uid://cnlojcsphsmxi"]
+[gd_scene load_steps=10 format=3 uid="uid://cnlojcsphsmxi"]
 
 [ext_resource type="Script" path="res://script/game_play.gd" id="1_lf48k"]
 [ext_resource type="Texture2D" uid="uid://cey5sn8qjpe4i" path="res://images/pictures/testpic1.jpg" id="2_ydn58"]
 [ext_resource type="PackedScene" uid="uid://cim7ua1hvh7cw" path="res://scene/file_handler.tscn" id="3_176b5"]
+[ext_resource type="Texture2D" uid="uid://c3mdn1hftq6f" path="res://images/frame_found100x100.png" id="3_fg315"]
+[ext_resource type="PackedScene" uid="uid://bdcb13xdohtb5" path="res://scene/audio_player.tscn" id="5_vy3n3"]
 
 [sub_resource type="Theme" id="Theme_kr025"]
 Label/font_sizes/font_size = 32
@@ -29,6 +31,14 @@ texture = ExtResource("2_ydn58")
 centered = false
 
 [node name="Overlays" type="Node2D" parent="PictureArea/Picture"]
+
+[node name="SubPic" type="Sprite2D" parent="."]
+position = Vector2(2200, 1300)
+region_enabled = true
+
+[node name="Frame" type="Sprite2D" parent="SubPic"]
+texture = ExtResource("3_fg315")
+region_enabled = true
 
 [node name="FileHandler" parent="." instance=ExtResource("3_176b5")]
 
@@ -68,5 +78,29 @@ grow_horizontal = 2
 grow_vertical = 0
 theme = SubResource("Theme_verd8")
 text = "Next"
+
+[node name="FrameCountBox" type="HBoxContainer" parent="CanvasLayer"]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -375.0
+offset_top = -69.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="Label" type="Label" parent="CanvasLayer/FrameCountBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 50
+text = "Frame Count: "
+horizontal_alignment = 2
+
+[node name="FrameCount" type="Label" parent="CanvasLayer/FrameCountBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 50
+text = "0"
+
+[node name="AudioPlayer" parent="." instance=ExtResource("5_vy3n3")]
 
 [connection signal="pressed" from="CanvasLayer/NextBtn" to="." method="_on_next_btn_pressed"]

@@ -1,5 +1,5 @@
 res://scene/game_play.tscn
-res://script/file_handler.gd
 res://scene/file_handler.tscn
 res://scene/found_frame.tscn
 res://autoload/config.tscn
+res://script/game_play.gd

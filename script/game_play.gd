@@ -3,8 +3,17 @@ extends Node2D
 
 
 #region Description
-# Controls the game play
+# This tool allows the user to go through the list of image files in the 
+# new_pictures directory and select what points in the picture will be used
+# as patterns. 
 #
+# When the user does a left click on the image, then we:
+#	Draw a box around that spot on the image (pattern),
+#	Draw that pattern on the screen for verification purposes, and
+#	Add the Rect2 of the pattern to an array.
+#
+# The user may also use the right mouse button to remove a pattern from the
+# image and the pattern array.
 #endregion
 
 
@@ -21,7 +30,7 @@ const found_frame = preload("res://scene/found_frame.tscn")
 
 # exports (The following properties must be set in the Inspector by the designer)
 
-@export var picture_area_vertical_offset := 60
+@export var picture_area_vertical_offset := 200
 @export var overlay_node: Node2D
 @export var fh: FileHandler
 
@@ -30,20 +39,22 @@ const found_frame = preload("res://scene/found_frame.tscn")
 # private variables
 
 var box: Rect2
-#var patterns: Array[int]
-#var patterns_available: Array[bool]
-#var found_count: int
 var data := {}
 var frames := []
 var picture_src 
 var files := []
 var cur_file := 0
 var active: bool
+var frame_count := 0
+
 # onready variables
 
 @onready var picture_area := $PictureArea
 @onready var picture := $PictureArea/Picture
 @onready var file_list := $CanvasLayer/HBoxContainer/Files
+@onready var sub_pic = $SubPic
+@onready var audio_player = $AudioPlayer
+
 #endregion
 
 
@@ -62,15 +73,8 @@ var active: bool
 # Load the patterns to find and shuffle them
 # Arrange the patterns to find boxes on screen
 func _ready() -> void:
-	#var vp = get_viewport_rect()
-	#picture.texture = picture_src
-	#picture.region_rect = Rect2(0,0,Constant.PICTURE_WIDTH,Constant.PICTURE_HEIGHT)
-	#picture.position.x = vp.end.x / 2.0 - (float(Constant.PICTURE_WIDTH) / 2.0)
-	#picture.position.y = picture_area_vertical_offset
-	#box = Rect2(picture.position, 
-			#Vector2(Constant.PICTURE_WIDTH, Constant.PICTURE_HEIGHT))
-	#found_count = 0
 	
+	sub_pic.visible = true
 	active = false
 	files = fh.get_image_files()
 	for f in files:
@@ -88,25 +92,65 @@ func _ready() -> void:
 # Return
 #	None
 #==
-
+# Step 1: Exit program on cancel
+# Step 2: Check for left mouse button
+#	If the mouse position is inside of an existing pattern, then ignore it.
+#	Make sure the click is inside the picture image
+#	Calculate the pattern box offset
+# 	Show the sub-pic image box
+#	Set what part of the image to display in the sub-pic box
+#	Add that Rect2 to the frames array
+#		Hmmm. Seems the Rect2 is in local position while event.position is in global.
+#		We need the local position for drawing and such, and global for testing
+#		if we've used that square before. So, we store both in the array.
+#	Put a blue outline in the main image
+# Step 3: Check for right mouse button
 func _input(event: InputEvent) -> void:
+# Step 1
+	if event.is_action_pressed("ui_cancel"): get_tree().quit()
+# Step 2	
 	if (event is InputEventMouseButton and 
 		event.button_index == MOUSE_BUTTON_LEFT and 
 		event.pressed and 
 		active): 
-		var frame := get_frame_clicked(event.position)
-		if frame >= 0:
-			var ndx = frames.find(frame)
-			if ndx < 0:
-				frames.append(frame)
-				set_frame_found(frame)			
-			else:
-				delete_frame_found(frame)
-				frames.remove_at(ndx)
-				
+		if box.has_point(event.position):
+			if mouse_in_existing_pattern(event.position) != -1:
+				audio_player.bad_beep()
+				return
+			var xyoffset = Constant.PATTERN_SIZE / 2
+			sub_pic.visible = true
+			sub_pic.region_rect = Rect2(event.position.x - box.position.x - xyoffset, 
+				event.position.y - box.position.y - xyoffset,
+				Constant.PATTERN_SIZE, 
+				Constant.PATTERN_SIZE)
+			printt(event.position, sub_pic.region_rect)
+			frames.append([sub_pic.region_rect, 
+				Rect2(event.position.x - xyoffset,
+					  event.position.y - xyoffset,
+					  Constant.PATTERN_SIZE,
+					  Constant.PATTERN_SIZE)])
+			set_frame_found(sub_pic.region_rect)
 
+# Step 3
 
 # Built-in Signal Callbacks
+
+func _on_next_btn_pressed():
+	active = false
+	var data_key := ("%04d" % cur_file)
+	data[data_key] = {
+		"image" = files[cur_file],
+		"pattern_list" = frames.duplicate()
+	}
+	
+	cur_file += 1
+	if cur_file >= files.size():
+		print(data)
+		Config.image_data = data.duplicate()
+		Config.save_image_data(data)
+		get_tree().quit()
+	else:
+		start_new_picture(files[cur_file])
 
 
 # Custom Signal Callbacks
@@ -116,36 +160,12 @@ func _input(event: InputEvent) -> void:
 
 # Private Methods
 
-# get_frame_clicked(pos)
-# Check if mouse clicked in the picture.
-# If so, then return what animation frame was clicked
-#
-# Parameters
-#	pos: Vector2					Mouse position at time of click
-# Return
-#	int								Frame number corresponding to click position
-#	-1								Click wasn't in the picture
-#==
-# Check if the position is in the box.
-# If not, then return -1
-# Calculate the frame number and return it
-func get_frame_clicked(pos: Vector2) -> int:
-	if not box.has_point(pos):
-		return -1
-		
-	var frame_number: int 	
-	var boxl = pos.x - box.position.x
-	var boxh = pos.y - box.position.y
-	var segx: int = boxl / Constant.PATTERN_SIZE
-	var segy: int = boxh / Constant.PATTERN_SIZE
-	frame_number = segx + (segy * 12)
-
-	return frame_number
-
 
 func start_new_picture(src: String) -> void:
 	var vp = get_viewport_rect()
+	frame_count = 0
 	picture.texture = load("res://images/new_pictures/" + src)
+	sub_pic.texture = picture.texture
 	picture.region_rect = Rect2(0,0,Constant.PICTURE_WIDTH,Constant.PICTURE_HEIGHT)
 	picture.position.x = vp.end.x / 2.0 - (float(Constant.PICTURE_WIDTH) / 2.0)
 	picture.position.y = picture_area_vertical_offset
@@ -165,39 +185,58 @@ func start_new_picture(src: String) -> void:
 #	None
 #==
 # What the code is doing (steps)
-func set_frame_found(frame: int) -> void:
-	var posx := frame % Constant.HFRAME_COUNT * float(Constant.PATTERN_SIZE) + float(Constant.PATTERN_SIZE) / 2.0
-	var posy := float(frame / Constant.HFRAME_COUNT * Constant.PATTERN_SIZE + float(Constant.PATTERN_SIZE) / 2.0)
-	var pos := Vector2(posx, posy)
+func set_frame_found(rect: Rect2) -> void:
+	var pos := rect.position #Vector2(posx, posy)
 	var overlay = found_frame.instantiate()
 	overlay.position = pos
-	overlay.frame_number = frame
+	overlay.rect = rect
 	overlay_node.add_child(overlay)
+	frame_count += 1
+	$CanvasLayer/FrameCountBox/FrameCount.text = str(frame_count)
 
 		
 
+# delete_frame_found(frame)
+# This method removes a frame from the screen.
+# If frame is -1, then delete all of them
+#
+# Parameters
+#	frame: int						The frame to delete
+# Return
+#	None
+#==
+# What the code is doing (steps)
 func delete_frame_found(frame: int) -> void:
 	for o in overlay_node.get_children():
 		if o is FoundFrame:
 			if o.frame_number == frame or frame == -1:
 				o.queue_free()
+				frame_count -= 1
+				$CanvasLayer/FrameCountBox/FrameCount.text = str(frame_count)
+
+
+# mouse_in_existing_pattern(pos)
+# Check to see if pos is inside of an existing pattern
+#
+# Parameters
+#	pos: Vectore2					Position to check
+# Return
+#	int								-1 = Not found
+#									Index into the frames array of matching pattern
+#==
+# Return not found as default
+# Loop through the frames array
+# Test if any of the entries contains pos
+# If so, then return the index into the frames array
+func mouse_in_existing_pattern(pos: Vector2) -> int:
+	var retval: int = -1
+	for i in frames.size():
+		if frames[i][1].has_point(pos):
+			retval = i
+	return retval
+	
+				
 # Subclasses
 
 
 
-func _on_next_btn_pressed():
-	active = false
-	var data_key := ("%04d" % cur_file)
-	data[data_key] = {
-		"image" = files[cur_file],
-		"pattern_list" = frames.duplicate(),
-	}
-	
-	cur_file += 1
-	if cur_file >= files.size():
-		print(data)
-		Config.image_data = data.duplicate()
-		Config.save_image_data(data)
-		get_tree().quit()
-	else:
-		start_new_picture(files[cur_file])
