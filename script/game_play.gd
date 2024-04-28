@@ -157,7 +157,6 @@ func _on_next_btn_pressed():
 	
 	cur_file += 1
 	if cur_file >= files.size():
-		print(data)
 		Config.image_data = data.duplicate()
 		Config.save_image_data(data)
 		get_tree().quit()
@@ -223,7 +222,6 @@ func set_frame_found(rect: Rect2) -> void:
 #==
 # What the code is doing (steps)
 func delete_frame_found(frame: int) -> void:
-	printt("Deleting frame: ", frame)
 	for o in overlay_node.get_children():
 		if o is FoundFrame:
 			if o.frame_index == frame or frame == -1:
