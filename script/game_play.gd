@@ -157,8 +157,13 @@ func _on_next_btn_pressed():
 	
 	cur_file += 1
 	if cur_file >= files.size():
-		Config.image_data = data.duplicate()
-		Config.save_image_data(data)
+		Config.image_data.clear()
+		for k in data.keys():
+			var p: Array = []
+			for pl in data[k]["pattern_list"]:
+				p.append(pl[0])
+			Config.image_data[k] = {"pattern_list":  p}
+		Config.save_image_data(Config.image_data)
 		get_tree().quit()
 	else:
 		start_new_picture(files[cur_file])

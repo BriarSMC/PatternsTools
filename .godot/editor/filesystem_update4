@@ -1,7 +1,8 @@
 res://scene/game_play.tscn
-res://autoload/constant.gd
 res://script/game_play.gd
 res://scene/file_handler.tscn
 res://scene/found_frame.tscn
 res://autoload/config.tscn
 res://scene/audio_player.tscn
+res://autoload/constant.gd
+res://resources/image_data.gd

@@ -8,7 +8,4 @@ func save() -> void:
 	
 
 static func load_or_create() -> ImageData:
-	var res:  ImageData = load("res://data/image_data.tres") as ImageData
-	if not res:
-		res = ImageData.new()
-	return res
+	return ImageData.new()
