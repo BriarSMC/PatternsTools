@@ -162,7 +162,7 @@ func _on_next_btn_pressed():
 			var p: Array = []
 			for pl in data[k]["pattern_list"]:
 				p.append(pl[0])
-			Config.image_data[k] = {"pattern_list":  p}
+			Config.image_data[k] = {"image": data[k]["image"], "pattern_list":  p}
 		Config.save_image_data(Config.image_data)
 		get_tree().quit()
 	else:
