@@ -1,13 +1,5 @@
 class_name FoundFrame
 extends Sprite2D
 
-var frame_number: int
-
-# Called when the node enters the scene tree for the first time.
-func _ready():
-	pass # Replace with function body.
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta):
-	pass
+var rect: Rect2
+var frame_index: int
