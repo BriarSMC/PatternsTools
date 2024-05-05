@@ -179,7 +179,6 @@ func _on_next_btn_pressed():
 
 func start_new_picture(src: String) -> void:
 	var vp = get_viewport_rect()
-	frame_count = 0
 	picture.texture = load("res://images/new_pictures/" + src)
 	sub_pic.texture = picture.texture
 	picture.region_rect = Rect2(0,0,Constant.PICTURE_WIDTH,Constant.PICTURE_HEIGHT)
@@ -191,6 +190,8 @@ func start_new_picture(src: String) -> void:
 	$CanvasLayer/WorkingOn.text = "Working on: " + src
 	frames.clear()
 	delete_frame_found(-1)
+	frame_count = 0	
+	
 	
 # set_frame_found(rect)
 # Player cliced on one of our pattern frames
